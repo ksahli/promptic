@@ -1,0 +1,51 @@
+{
+  "name": "promptic",
+  "version": "0.0.1",
+  "description": "structured prompt builder",
+  "homepage": "https://github.com/ksahli/promptic#readme",
+  "bugs": {
+    "url": "https://github.com/ksahli/promptic/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ksahli/promptic.git"
+  },
+  "license": "MIT",
+  "author": "a.khalil.sahli@proton.me",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./core/*": {
+      "types": "./dist/core/*/index.d.ts",
+      "import": "./dist/core/*/index.js"
+    },
+    "./renderer/*": {
+      "types": "./dist/renderer/*/index.d.ts",
+      "import": "./dist/renderer/*/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc -p tsconfig.build.json",
+    "format": "oxfmt src",
+    "verify": "oxlint src"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "fast-check": "^4.9.0",
+    "oxfmt": "^0.59.0",
+    "oxlint": "^1.74.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
