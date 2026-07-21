@@ -1,12 +1,27 @@
 import { expect, test } from 'vitest';
 import fc from 'fast-check';
 
+import type { Prompt } from 'promptic/core/prompt';
 import { examples } from 'promptic/core/sections/examples';
-import { promptArbitrary } from '../../../testing/prompt.js';
+
+const output = fc.constantFrom<Prompt['output']>('markdown', 'markup', 'raw');
+
+const arbitrary: fc.Arbitrary<Prompt> = fc.record(
+  {
+    output,
+    identity: fc.string(),
+    role: fc.string(),
+    context: fc.array(fc.record({ title: fc.string(), content: fc.string() })),
+    rules: fc.array(fc.string()),
+    constraints: fc.array(fc.string()),
+    examples: fc.array(fc.record({ human: fc.string(), assistant: fc.string() })),
+  },
+  { requiredKeys: ['output'] },
+);
 
 test('appends the given example to examples', () => {
   fc.assert(
-    fc.property(promptArbitrary, fc.string(), fc.string(), (base, human, assistant) => {
+    fc.property(arbitrary, fc.string(), fc.string(), (base, human, assistant) => {
       const result = examples(human, assistant)(base);
       expect(result.examples).toEqual([...(base.examples ?? []), { human, assistant }]);
     }),
@@ -15,7 +30,7 @@ test('appends the given example to examples', () => {
 
 test('preserves every other field of the prompt', () => {
   fc.assert(
-    fc.property(promptArbitrary, fc.string(), fc.string(), (base, human, assistant) => {
+    fc.property(arbitrary, fc.string(), fc.string(), (base, human, assistant) => {
       const result = examples(human, assistant)(base);
       expect({ ...result, examples: undefined }).toEqual({ ...base, examples: undefined });
     }),
@@ -24,7 +39,7 @@ test('preserves every other field of the prompt', () => {
 
 test('does not mutate the input prompt', () => {
   fc.assert(
-    fc.property(promptArbitrary, fc.string(), fc.string(), (base, human, assistant) => {
+    fc.property(arbitrary, fc.string(), fc.string(), (base, human, assistant) => {
       const snapshot = structuredClone(base);
       examples(human, assistant)(base);
       expect(base).toEqual(snapshot);
@@ -35,7 +50,7 @@ test('does not mutate the input prompt', () => {
 test('accumulates examples in order when composed', () => {
   fc.assert(
     fc.property(
-      promptArbitrary,
+      arbitrary,
       fc.string(),
       fc.string(),
       fc.string(),

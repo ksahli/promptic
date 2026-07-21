@@ -1,8 +1,23 @@
 import { expect, test } from 'vitest';
 import fc from 'fast-check';
 
+import type { Prompt } from 'promptic/core/prompt';
 import { markup } from 'promptic/renderer/markup';
-import { output, promptArbitrary } from '../../testing/prompt.js';
+
+const output = fc.constantFrom<Prompt['output']>('markdown', 'markup', 'raw');
+
+const arbitrary: fc.Arbitrary<Prompt> = fc.record(
+  {
+    output,
+    identity: fc.string(),
+    role: fc.string(),
+    context: fc.array(fc.record({ title: fc.string(), content: fc.string() })),
+    rules: fc.array(fc.string()),
+    constraints: fc.array(fc.string()),
+    examples: fc.array(fc.record({ human: fc.string(), assistant: fc.string() })),
+  },
+  { requiredKeys: ['output'] },
+);
 
 // A non-empty token free of newlines, so it never introduces blank-line runs.
 const token = fc.string({ minLength: 1 }).map((s) => s.replaceAll('\n', ' '));
@@ -22,7 +37,7 @@ const occurrences = (haystack: string, needle: string): number => haystack.split
 
 test('is deterministic', () => {
   fc.assert(
-    fc.property(promptArbitrary, (prompt) => {
+    fc.property(arbitrary, (prompt) => {
       expect(markup(prompt)).toBe(markup(prompt));
     }),
   );
@@ -30,7 +45,7 @@ test('is deterministic', () => {
 
 test('does not mutate the input prompt', () => {
   fc.assert(
-    fc.property(promptArbitrary, (prompt) => {
+    fc.property(arbitrary, (prompt) => {
       const snapshot = structuredClone(prompt);
       markup(prompt);
       expect(prompt).toEqual(snapshot);

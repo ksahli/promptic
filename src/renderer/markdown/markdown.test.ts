@@ -1,8 +1,23 @@
 import { expect, test } from 'vitest';
 import fc from 'fast-check';
 
+import type { Prompt } from 'promptic/core/prompt';
 import { markdown } from 'promptic/renderer/markdown';
-import { output, promptArbitrary } from '../../testing/prompt.js';
+
+const output = fc.constantFrom<Prompt['output']>('markdown', 'markup', 'raw');
+
+const arbitrary: fc.Arbitrary<Prompt> = fc.record(
+  {
+    output,
+    identity: fc.string(),
+    role: fc.string(),
+    context: fc.array(fc.record({ title: fc.string(), content: fc.string() })),
+    rules: fc.array(fc.string()),
+    constraints: fc.array(fc.string()),
+    examples: fc.array(fc.record({ human: fc.string(), assistant: fc.string() })),
+  },
+  { requiredKeys: ['output'] },
+);
 
 // A non-empty token free of newlines and '#', so it can never contain a
 // Markdown heading marker or introduce blank-line runs of its own.
@@ -21,7 +36,7 @@ const fullPrompt = fc.record({
 
 test('is deterministic', () => {
   fc.assert(
-    fc.property(promptArbitrary, (prompt) => {
+    fc.property(arbitrary, (prompt) => {
       expect(markdown(prompt)).toBe(markdown(prompt));
     }),
   );
@@ -29,7 +44,7 @@ test('is deterministic', () => {
 
 test('does not mutate the input prompt', () => {
   fc.assert(
-    fc.property(promptArbitrary, (prompt) => {
+    fc.property(arbitrary, (prompt) => {
       const snapshot = structuredClone(prompt);
       markdown(prompt);
       expect(prompt).toEqual(snapshot);
